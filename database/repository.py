@@ -17,12 +17,13 @@ def create_tables():
 class Control:
 
     @staticmethod
-    def select_inf_user(login):
+    def select_inf_user():
         with session() as sess:
-            query = select(Users).where(Users.login == login)
+            query = select(Users)
             result = sess.execute(query)
-            res = result.scalar()
-            return res
+            res = result.scalars().all()
+            lst = [{'user_id': i.user_id, 'email': i.email, 'login': i.login, 'password': i.password} for i in res]
+            return lst
 
     @staticmethod
     def insert_users(email, login, password):
@@ -36,10 +37,13 @@ class Control:
                 return 'пользователь с таким именем уже существует'
 
     @staticmethod
-    def insert_blog(blog, login):
+    def insert_blog(blog):
+        print(blog.external_id, blog.user_login, blog.name_blog, blog.description)
         with session() as sess:
             try:
-                blog = Blogs(user_login=login, name_blog=blog.name_blog, description=blog.description)
+
+                blog = Blogs(external_id=blog.external_id, user_login=blog.user_login, name_blog=blog.name_blog,
+                             description=blog.description)
                 sess.add(blog)
                 sess.commit()
                 return 'блог успешно добавлен'
@@ -47,27 +51,27 @@ class Control:
                 return 'пока хз ошибка'
 
     @staticmethod
-    def select_blog(login):
+    def select_blog(external_id):
         with session() as sess:
-            query = select(Blogs.name_blog, Blogs.description).where(Blogs.user_login == login)
+            query = select(Blogs).where(Blogs.external_id == external_id)
             result = sess.execute(query)
-            res = result.fetchall()
-            res = [{'название блога-' + i[0]: 'описание-' + i[1]} for i in res]
+            res = result.scalars().all()
+            res = [{'id': i.id, 'external_id': i.external_id, 'user_login': i.user_login, 'name_blog': i.name_blog,
+                    'description': i.description} for i in res]
             if len(res) == 0:
                 return 'нет активных blogs'
             return res
 
     @staticmethod
-    def delete_blog(login, name_blog):
+    def delete_blog(id_blog):
         with session() as sess:
-            print(login,name_blog)
-            query_blog = select(Blogs).where(Blogs.name_blog == name_blog)
+            query_blog = select(Blogs).where(Blogs.id == id_blog)
             result = sess.execute(query_blog)
             result = result.fetchall()
             if len(result) == 0:
                 return 'блог не найден'
 
-            query = delete(Blogs).where(Blogs.name_blog == name_blog).where(Blogs.user_login == login)
+            query = delete(Blogs).where(Blogs.id == id_blog)
             sess.execute(query)
             sess.commit()
             return 'блог успешно удалён'

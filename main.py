@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Query
 from auth import register, authenticate_user
 from database.repository import Control
-from schemas import Blog, User
+from schemas import Blog
 
 app = FastAPI(title="блог фор тимур", )
 
@@ -13,26 +13,24 @@ def registration(email: str, login: str, password: str):
 
 
 @app.post('/write_blog/')
-def write_blog(blog: Blog, user: User = Depends(authenticate_user)):
-    if user is None:
-        return user
-    login = user.login
-    result = Control.insert_blog(blog, login)
+def write_blog(blog: Blog):
+    result = Control.insert_blog(blog)
     return result
 
 
-@app.get("/user_info/")
-def get_user_info(user: User = Depends(authenticate_user)):
-    return {"message": "всё хорошо!", "user_info": user}
+@app.get("/users_info/")
+def get_user_info():
+    result = Control.select_inf_user()
+    return {'data': result}
 
 
 @app.get("/blogs/")
-def get_all_blogs(user: User = Depends(authenticate_user)):
-    result = Control.select_blog(user.login)
+def get_all_blogs(external_id: int ):
+    result = Control.select_blog(external_id)
     return {'blogs': result}
 
 
-@app.delete('/delete_blog')
-def delete_blog(name_blog: str, user: User = Depends(authenticate_user)):
-    result = Control.delete_blog(user.login,name_blog)
+@app.delete('/delete_blog/')
+def delete_blog(id_blog: int):
+    result = Control.delete_blog(id_blog)
     return {'message': result}
